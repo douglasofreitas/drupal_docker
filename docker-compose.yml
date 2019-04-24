@@ -1,0 +1,42 @@
+version: '2'
+
+services:
+  source-web:
+    image: busybox
+    container_name: 'drupal-src'
+    volumes:
+      - $PWD/src:/var/www/html
+
+  database:
+    image: mysql:5.6
+    container_name: 'drupal-db'
+    volumes:
+        - ./data/dump:/docker-entrypoint-initdb.d
+        - ./data/db:/var/lib/mysql
+    ports:
+      - "3381:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: drupaltest
+      MYSQL_USER: drupaltest
+      MYSQL_PASSWORD: drupaltest
+
+  web:
+    image: drupal-fe
+    build: ./docker/dev
+    container_name: 'drupal-web'
+    hostname: 'dev'
+    ports:
+      - "80:80"
+    links:
+      - database
+    volumes_from:
+      - source-web
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+    environment:
+      DB_HOST: database
+      DB_NAME: drupaltest
+      DB_USER: drupaltest
+      DB_PASS: drupaltest
